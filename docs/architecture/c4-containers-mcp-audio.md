@@ -8,29 +8,29 @@ Nível: **Containers**. Escopo: MCP Server local para ingestão, busca e atualiz
 
 ## Diagrama C4 Containers
 
+Detalhes de responsabilidade ficam na tabela abaixo.
+
 ```mermaid
 C4Container
-title MCP Audio — Containers
+title MCP Audio - Containers
 
-Person(agent, "MCP Host", "Cursor / agente que chama tools MCP")
+Person(agent, "MCP Host", "Cursor / agente")
 
-System_Boundary(mcp_system, "Sistema MCP Audio (local)") {
-    Container(mcp, "MCP Server", "MCP / Python ou Node", "Expõe tools: add_audio, search_audio, update_transcription, update_phonemes, backup_now. Orquestra ingestão e updates. Sem tools de delete/overwrite de áudio.")
-    Container(proc, "Processing Adapters", "Libs locais", "ASR → transcrição; fonemização IPA; HuBERT (áudio); text-embed (transcrição). Código existente adaptado ao MCP.")
-    ContainerDb(qdrant, "Qdrant", "Qdrant local", "Named vectors audio + text; payload: path, autor, transcrição, fonemas IPA, tags.")
-    Container(store, "Audio Storage", "Filesystem db/", "Cópias imutáveis via MCP dos áudios; DB guarda só o path.")
-    Container(backup, "Backup Job", "Scheduler + script", "Snapshot semanal + backup_now. Cobre db/ + estado Qdrant + metadados. Verifica integridade (SHA-256).")
+System_Boundary(mcp_system, "Sistema MCP Audio local") {
+    Container(mcp, "MCP Server", "MCP", "Orquestra tools; sem delete de audio")
+    Container(proc, "Processing Adapters", "Libs locais", "ASR, IPA, HuBERT, text-embed")
+    ContainerDb(qdrant, "Qdrant", "Local", "Vetores audio+text e metadados")
+    Container(store, "Audio Storage", "Filesystem db/", "Arquivos; path no DB")
+    Container(backup, "Backup Job", "Scheduler", "Snapshot semanal + backup_now")
 }
 
-Rel(agent, mcp, "MCP tools / resources", "stdio ou HTTP MCP")
-Rel(mcp, proc, "Invoca ASR, IPA, embeddings")
-Rel(mcp, store, "Copia áudio no add; lê path na search")
-Rel(mcp, qdrant, "Upsert / search / update payload", "SDK Qdrant")
-Rel(mcp, backup, "Dispara backup_now; agenda 1×/semana")
-Rel(backup, store, "Copia + checksum")
-Rel(backup, qdrant, "Snapshot coleções + checksum")
-
-UpdateRelStyle(agent, mcp, $offsetY="-20")
+Rel(agent, mcp, "MCP tools")
+Rel(mcp, proc, "ASR / embed")
+Rel(mcp, store, "FS")
+Rel(mcp, qdrant, "SDK")
+Rel(mcp, backup, "Dispara backup")
+Rel(backup, store, "Copia")
+Rel(backup, qdrant, "Snapshot")
 ```
 
 ### Notas do desenho
